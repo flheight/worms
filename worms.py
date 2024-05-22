@@ -30,7 +30,6 @@ class Worms:
 
             winner_worm = np.argmin([np.min(dist) for dist in dists])
             winner_idx = np.argmin(dists[winner_worm])
-            winner_dist = dists[winner_worm][winner_idx]
             weight = projections[winner_worm][winner_idx, 0]
             weights = np.array([[weight], [1 - weight]])
 

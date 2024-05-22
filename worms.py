@@ -30,12 +30,17 @@ class Worms:
 
             winner_worm = np.argmin([np.min(dist) for dist in dists])
             winner_idx = np.argmin(dists[winner_worm])
+            winner_dist = dists[winner_worm][winner_idx]
             weight = projections[winner_worm][winner_idx, 0]
             weights = np.array([[weight], [1 - weight]])
 
-            if weight > 0 and weight < 1:
-                density[winner_worm][winner_idx] += 1
+            density[winner_worm][winner_idx] += 1
+
+            cdensity1 = np.cumsum(density[winner_worm]).reshape(-1, 1)
+            cdensity2 = np.cumsum(density[winner_worm][::-1]).reshape(-1, 1)
+
+            d = density[winner_worm] + cdensity1[-1]
 
             self.clusters[winner_worm][winner_idx:winner_idx + 2] += (x - self.clusters[winner_worm][winner_idx:winner_idx + 2]) * lr * weights
-            self.clusters[winner_worm][:-1] += lam * lr * segments[winner_worm] / (1 + density[winner_worm] / epoch)
-            self.clusters[winner_worm][1:] -= lam * lr * segments[winner_worm] / (1 + density[winner_worm] / epoch)
+            self.clusters[winner_worm][:-1] += lam * lr * segments[winner_worm] * cdensity2 / d
+            self.clusters[winner_worm][1:] -= lam * lr * segments[winner_worm] * cdensity1 / d

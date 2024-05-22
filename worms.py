@@ -8,18 +8,17 @@ class Worms:
     def load_data(self, data):
         self.data = data
 
-    def __init_clusters(self):
+    def __init_clusters(self, max_nodes):
         kmeans = KMeans(self.out_dim).fit(self.data)
         var = .01 * np.eye(self.data.shape[1])
-        self.clusters = [np.random.multivariate_normal(center, var, 30) for center in kmeans.cluster_centers_]
+        self.clusters = [np.random.multivariate_normal(center, var, max_nodes) for center in kmeans.cluster_centers_]
 
-    def learn(self, epochs, lam=.005, lr=.5):
-        self.__init_clusters()
+    def learn(self, epochs, max_nodes=50, lam=.005, lr=.5):
+        self.__init_clusters(max_nodes)
 
-        sample = self.data[np.random.choice(np.arange(self.data.shape[0]), 256)]
-        density = [np.mean(np.exp(-np.sum((sample[:, np.newaxis, :] - chain)**2 / (2 * .2**2), axis=2)), axis=0) for chain in self.clusters]
+        density = [np.zeros((chain.shape[0] - 1, 1)) for chain in self.clusters]
 
-        for _ in range(epochs):
+        for epoch in range(1, epochs + 1):
             x = self.data[np.random.randint(self.data.shape[0])]
 
             segments = [chain[1:] - chain[:-1] for chain in self.clusters]
@@ -34,11 +33,9 @@ class Worms:
             weight = projections[winner_worm][winner_idx, 0]
             weights = np.array([[weight], [1 - weight]])
 
-            sample = self.data[np.random.choice(np.arange(self.data.shape[0]), 256)]
-
-            diffs = sample[:, np.newaxis, :] - self.clusters[winner_worm][winner_idx:winner_idx + 2]
-            density[winner_worm][winner_idx:winner_idx + 2] = np.mean(np.exp(-np.einsum('ijk,ijk->ij', diffs, diffs) / (2 * .2**2)), axis=0)
+            if weight > 0 and weight < 1:
+                density[winner_worm][winner_idx] += 1
 
             self.clusters[winner_worm][winner_idx:winner_idx + 2] += (x - self.clusters[winner_worm][winner_idx:winner_idx + 2]) * lr * weights
-            self.clusters[winner_worm][:-1] += lam * lr * segments[winner_worm] / (1 + density[winner_worm][:-1, np.newaxis])
-            self.clusters[winner_worm][1:] -= lam * lr * segments[winner_worm] / (1 + density[winner_worm][1:, np.newaxis])
+            self.clusters[winner_worm][:-1] += lam * lr * segments[winner_worm] / (1 + density[winner_worm] / epoch)
+            self.clusters[winner_worm][1:] -= lam * lr * segments[winner_worm] / (1 + density[winner_worm] / epoch)

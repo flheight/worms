@@ -8,9 +8,9 @@ class Worms:
     def load_data(self, data):
         self.data = data
 
-    def __init_clusters(self, max_nodes):
+    def __init_clusters(self, max_nodes, eps=.005):
         kmeans = KMeans(self.out_dim).fit(self.data)
-        var = .01 * np.eye(self.data.shape[1])
+        var = eps * np.eye(self.data.shape[1])
         self.clusters = [np.random.multivariate_normal(center, var, max_nodes) for center in kmeans.cluster_centers_]
 
     def learn(self, epochs, max_nodes=50, lam=.005, lr=.5):

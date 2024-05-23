@@ -22,7 +22,7 @@ class Worms:
         density[unique_idxs[right_mask]] += unique_idxs_counts[right_mask]
         return density
 
-    def __mh(self, worm_idx, direction, n_samples, alpha1=0.9, alpha2=0.85):
+    def __mh(self, worm_idx, direction, n_samples, alpha1=0.99, alpha2=0.95):
         init_cost = self.loss(self.clusters, n_samples)
         self.cost.append(init_cost)
 
@@ -37,7 +37,7 @@ class Worms:
             snapshot[worm_idx] = np.vstack((snapshot[worm_idx], new))
 
         last_cost = self.loss(snapshot, n_samples)
-        if last_cost / init_cost < alpha1:
+        if np.exp(last_cost - init_cost) < alpha1:
             return snapshot
 
         if self.clusters[worm_idx].shape[0] <= 2:
@@ -51,7 +51,7 @@ class Worms:
             snapshot[worm_idx] = snapshot[worm_idx][:-1]
 
         last_cost = self.loss(snapshot, n_samples)
-        if last_cost / init_cost < alpha2:
+        if np.exp(last_cost - init_cost) < alpha2:
             return snapshot
 
         return self.clusters

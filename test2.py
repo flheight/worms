@@ -12,9 +12,8 @@ from worms import Worms
 net2 = Worms(k=2)
 net2.data = X
 
-
 start = time.time()
-net2.learn(5000, init_nodes=2, lam=.5, lr=.75)
+net2.learn(100000, max_nodes=50, lam=1, lr=.05)
 end = time.time()
 
 print(f"Elapsed time : {end - start}")
